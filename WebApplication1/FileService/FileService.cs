@@ -7,7 +7,7 @@ namespace WebApplication1.FileService
         private readonly string _directory;
         private readonly string _folderName;
 
-        public FileService( string directory, string folderName)
+        public FileService( string directory = @"D:", string folderName = "photos")
         {
             _directory = directory;
             _folderName = folderName;

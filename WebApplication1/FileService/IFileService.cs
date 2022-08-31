@@ -3,6 +3,6 @@
     public interface IFileService
     {
         Task UpoloadFileAsync(Guid id, IFormFile file);
-        Task<byte[]> GetFile(string name);
+        Task<(byte[] bytes, string fileName)> Get(Guid id);
     }
 }

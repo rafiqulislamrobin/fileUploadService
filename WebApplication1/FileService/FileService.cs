@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace WebApplication1.FileService
 {
@@ -7,10 +8,13 @@ namespace WebApplication1.FileService
         private readonly string _directory;
         private readonly string _folderName;
 
-        public FileService( string directory = @"D:", string folderName = "photos")
+        private FileDbContext _context;
+
+        public FileService(FileDbContext context, string directory = @"D:", string folderName = "photos")
         {
             _directory = directory;
             _folderName = folderName;
+            _context = context;
         }
 
 
@@ -24,7 +28,7 @@ namespace WebApplication1.FileService
             if (!Directory.Exists(uploadFolderPath))
                 Directory.CreateDirectory(uploadFolderPath);
 
-            var fileName = $"{id}.jpg";
+            var fileName = id.ToString() + Path.GetExtension(file.FileName);
             var path = Path.Combine(uploadFolderPath, fileName);
 
 
@@ -32,16 +36,37 @@ namespace WebApplication1.FileService
             {
                 await file.CopyToAsync(stream);
             }
+
+            var fi = new File();
+            fi.FileName = fileName;
+            fi.CreatedOn = DateTime.Now.ToString();
+            fi.ModifiedOn = DateTime.Now.ToString();
+            fi.FileId = id;
+            fi.ContentType = file.ContentType;
+            await Add(fi);
         }
         
-        public async Task<byte[]> GetFile(string name)
+        public async Task<(byte[] bytes, string fileName)> Get(Guid id)
         {
-
-            string path = Path.Combine(_directory, _folderName, name);
+            var file = await GetFileById(id);
+            string path = Path.Combine(_directory, _folderName, file.FileName);
 
             byte[] bytes = System.IO.File.ReadAllBytes(path);            
 
-            return bytes;
+            return (bytes, file.FileName);
         }
+
+        public async Task Add(File file)
+        {
+                await _context.Files.AddAsync(file);
+                await _context.SaveChangesAsync();
+        }
+
+        public async Task<File> GetFileById(Guid id)
+        {
+           var file = await _context.Files.FindAsync(id);
+            return file;
+        }
+
     }
 }

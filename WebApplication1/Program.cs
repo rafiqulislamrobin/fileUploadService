@@ -1,24 +1,29 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.EntityFrameworkCore;
+using WebApplication1;
 using WebApplication1.FileService;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbContext = new FileDbContext(connectionString);
+builder.Services.AddScoped<FileDbContext>(_ => dbContext);
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<IFileService>(
-    x => new FileService(
+builder.Services.AddDbContext<FileDbContext>(
+  
+    optionsBuilder => optionsBuilder.UseNpgsql(connectionString)
+);
+
+builder.Services.AddScoped<IFileService>(x => new FileService(
+        context: dbContext,
         directory: builder.Configuration.GetSection("Directory").Value,
-        folderName: builder.Configuration.GetSection("FolderName").Value)
-    );
+        folderName: builder.Configuration.GetSection("FolderName").Value));
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

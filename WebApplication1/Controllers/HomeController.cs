@@ -31,9 +31,8 @@ namespace WebApplication1.Controllers
 
         public async Task<FileResult> GetFileById(Guid id)
         {
-            var fileName = $"{id}.jpg";
-            var x = await _fileService.GetFile(fileName);
-            return File(x, "application/octet-stream", fileName);
+            var file = await _fileService.Get(id);
+            return File(file.bytes, "application/octet-stream", file.fileName);
         }
 
         public IActionResult Privacy()
